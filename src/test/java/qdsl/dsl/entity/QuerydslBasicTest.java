@@ -5,6 +5,7 @@ import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static qdsl.dsl.entity.QMember.*;
 import static qdsl.dsl.entity.QTeam.*;
@@ -406,7 +408,7 @@ public class QuerydslBasicTest {
         String usernameParam = "member1";
         Integer ageParam = null;
         List<Member> result = searchMember1(usernameParam, ageParam);
-        Assertions.assertThat(result.size()).isEqualTo(1);
+        assertThat(result.size()).isEqualTo(1);
     }
     private List<Member> searchMember1(String usernameCond, Integer ageCond) {
 
@@ -429,23 +431,23 @@ public class QuerydslBasicTest {
     public void dynamicQuery_WhereParam(){
 
         String usernameParam = "member1";
-        Integer ageParam = 10;
+        Integer ageParam = null;
 
-        List<Member> result = searchMember3(usernameParam, ageParam);
-        Assertions.assertThat(result.size()).isEqualTo(1);
+        List<Member> result = searchMember2(usernameParam, ageParam);
+        assertThat(result.size()).isEqualTo(1);
 
     }
 
-    private List<Member> searchMember3(String usernameCond, Integer ageCond) {
-
+    private List<Member> searchMember2(String usernameCond, Integer ageCond) {
         return queryFactory
-                .select(member)
-                .where(usernameEq(usernameCond),ageRq(ageCond))
+                .selectFrom(member)
+//                .where(usernameEq(usernameCond),ageRq(ageCond))
+                .where(allEq(usernameCond,ageCond))
                 .fetch();
     }
 
 
-    private Predicate usernameEq(String usernameCond) {
+    private BooleanExpression usernameEq(String usernameCond) {
         if(usernameCond==null){
             return null;
 
@@ -455,8 +457,36 @@ public class QuerydslBasicTest {
 
     }
 
-    private Predicate ageRq(Integer ageCond) {
+    private BooleanExpression ageRq(Integer ageCond) {
         return ageCond != null ? member.age.eq(ageCond) : null;
+    }
+
+    private BooleanExpression allEq(String usernameCond,Integer ageCond){
+        return usernameEq(usernameCond).and(ageRq(ageCond));
+    }
+
+    @Test
+    public void bulkUpdate(){
+
+        queryFactory
+                .update(member)
+                .set(member.username,"비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        em.flush();
+        em.clear();
+        // 영속성 컨텍스트 안에는 이미 존재 하고 벌크 연산 수행 하면 뭐리는 나가지만
+        // jpa 특성상 조회한 것들이 이미 영속성 컨텍스트에 존재하면 그대로 유지한다
+        // 그렇기 때문에 디비에서는 바뀌지만 영속성 컨텍스트에서 확인하면 바뀌지 않는다 그래서 컨텍스트를 비워야 한다 clear or @modifying
+
+    }
+    @Test
+    public void bulkAdd(){
+        queryFactory
+                .update(member)
+                .set(member.age,member.age.add(1))
+                .execute();
     }
 
 
