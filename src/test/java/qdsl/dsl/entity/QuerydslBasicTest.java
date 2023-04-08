@@ -481,6 +481,8 @@ public class QuerydslBasicTest {
         // 그렇기 때문에 디비에서는 바뀌지만 영속성 컨텍스트에서 확인하면 바뀌지 않는다 그래서 컨텍스트를 비워야 한다 clear or @modifying
 
     }
+
+
     @Test
     public void bulkAdd(){
         queryFactory
