@@ -13,7 +13,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Hello {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

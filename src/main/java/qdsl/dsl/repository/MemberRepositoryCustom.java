@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface MemberRepositoryCustom {
 
+    // data jpa,querydsl 같이 사용하기
     List<MemberTeamDto> search(MemberSearchCondition condition);
 }
